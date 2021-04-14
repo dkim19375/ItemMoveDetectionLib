@@ -3,6 +3,7 @@ package me.dkim19375.itemmovedetectionlib.event;
 import me.dkim19375.itemmovedetectionlib.util.TransferType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
@@ -28,15 +29,18 @@ public class InventoryItemTransferEvent extends InventoryEvent implements Cancel
     @Nullable
     private final Inventory to;
     private boolean cancelled;
+    @Nullable
+    private final InventoryAction inventoryAction;
 
     public InventoryItemTransferEvent(@NotNull TransferType type, InventoryView transaction, @NotNull List<ItemStack> items,
-                                      @NotNull Inventory from, @Nullable Inventory to, boolean cancelled) {
+                                      @NotNull Inventory from, @Nullable Inventory to, boolean cancelled, @Nullable InventoryAction inventoryAction) {
         super(transaction);
         this.type = type;
         this.items = Collections.unmodifiableList(items);
         this.from = from;
         this.to = to;
         this.cancelled = cancelled;
+        this.inventoryAction = inventoryAction;
     }
 
     /**
@@ -101,5 +105,13 @@ public class InventoryItemTransferEvent extends InventoryEvent implements Cancel
     @Nullable
     public Inventory getTo() {
         return to;
+    }
+
+    /**
+     * @return the {@link InventoryAction} of the
+     */
+    @Nullable
+    public InventoryAction getInventoryAction() {
+        return inventoryAction;
     }
 }
