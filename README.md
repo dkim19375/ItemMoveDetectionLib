@@ -1,3 +1,4 @@
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/dkim19375/ItemMoveDetectionLib?label=Latest%20Version)
 # ItemMoveDetectionLib
 A simple library to detect when a player removes or adds an item from their inventory.
 
