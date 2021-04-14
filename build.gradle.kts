@@ -17,7 +17,9 @@ java {
 
 tasks {
     named<ShadowJar>("shadowJar") {
-        finalizedBy("copyFileToServer")
+        finalizedBy("deleteFiles")
+        finalizedBy("copyFileToServer_8")
+        finalizedBy("copyFileToServer_16")
     }
 }
 
@@ -32,10 +34,17 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
 }
 
-tasks.register<Copy>("copyFileToServer") {
+tasks.register<Copy>("copyFileToServer_8") {
     File("../.TestServers/1.8/plugins/" + project.name + "-" + project.version + "-all.jar").delete()
     from("build/libs/" + project.name + "-" + project.version + "-all.jar")
     into("../.TestServers/1.8/plugins")
+    include("*.jar")
+}
+
+tasks.register<Copy>("copyFileToServer_16") {
+    File("../.TestServers/1.16/plugins/" + project.name + "-" + project.version + "-all.jar").delete()
+    from("build/libs/" + project.name + "-" + project.version + "-all.jar")
+    into("../.TestServers/1.16/plugins")
     include("*.jar")
 }
 
