@@ -3,10 +3,11 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("com.github.johnrengelman.shadow") version "6.1.0"
     id("java")
+    id("maven")
 }
 
 group = "me.dkim19375"
-version = "1.0.0"
+version = "1.0.1"
 
 val javaVersion = JavaVersion.VERSION_1_8
 
