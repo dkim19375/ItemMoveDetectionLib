@@ -4,7 +4,7 @@ A simple library to detect when a player removes or adds an item from their inve
 
 Note: For GUI plugins and similar, you should use `InventoryClickEvent` instead of this library.
 ## How to use
-### Getting the dependency
+### Getting the dependency (Coming soon... Jitpack is not cooperating 🙁)
 Gradle:
 ```groovy
 plugins {
