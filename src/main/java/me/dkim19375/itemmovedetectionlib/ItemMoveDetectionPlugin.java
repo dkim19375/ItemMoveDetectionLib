@@ -24,29 +24,22 @@
 
 package me.dkim19375.itemmovedetectionlib;
 
-import me.dkim19375.itemmovedetectionlib.listener.ItemMoveListeners;
-import org.bukkit.Bukkit;
+import me.dkim19375.itemmovedetectionlib.event.InventoryItemTransferEvent;
+import org.bukkit.ChatColor;
+import org.bukkit.event.EventHandler;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class ItemMoveDetectionLib {
-    private static boolean registered = false;
-
-    public static void register() {
-        register(JavaPlugin.getProvidingPlugin(ItemMoveDetectionLib.class));
+public class ItemMoveDetectionPlugin extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        ItemMoveDetectionLib.register(this);
     }
 
-    public static void register(JavaPlugin plugin) {
-        if (!isRegistered()) {
-            registered = true;
-            registerListeners(plugin);
+    @EventHandler
+    private void onTransfer(InventoryItemTransferEvent event) {
+        if (event.getType().isFromOther()) {
+            event.getPlayer().sendMessage(ChatColor.RED + "Don't steal!!");
+            event.setCancelled(true);
         }
-    }
-
-    public static boolean isRegistered() {
-        return registered;
-    }
-
-    private static void registerListeners(JavaPlugin plugin) {
-        Bukkit.getPluginManager().registerEvents(new ItemMoveListeners(), plugin);
     }
 }

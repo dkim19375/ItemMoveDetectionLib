@@ -1,0 +1,5 @@
+main: me.dkim19375.itemmovedetectionlib.ItemMoveDetectionPlugin
+name: ItemMoveDetectionLib
+version: 1.0-SNAPSHOT
+description: A library to detect when items move across inventories
+author: dkim19375

@@ -1,10 +1,33 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021 dkim19375
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package me.dkim19375.itemmovedetectionlib.listener;
 
 import me.dkim19375.itemmovedetectionlib.event.InventoryItemTransferEvent;
-import me.dkim19375.itemmovedetectionlib.util.EntryImpl;
-import me.dkim19375.itemmovedetectionlib.util.SimplifiedAction;
-import me.dkim19375.itemmovedetectionlib.util.TransferType;
+import me.dkim19375.itemmovedetectionlib.util.*;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
@@ -23,26 +46,35 @@ import org.bukkit.inventory.PlayerInventory;
 import java.util.*;
 
 public class ItemMoveListeners implements Listener {
-    private final Map<UUID, Map.Entry<InventoryLoc, Map.Entry<ItemStack, Map.Entry<Integer, InventoryView>>>> pickedItems = new HashMap<>();
+    private final Map<UUID, PickedItems> pickedItems = new HashMap<>();
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onDrop(PlayerDropItemEvent event) {
         final Player player = event.getPlayer();
-        final Map.Entry<InventoryLoc, Map.Entry<ItemStack, Map.Entry<Integer, InventoryView>>> entry = pickedItems.get(player.getUniqueId());
-        pickedItems.remove(player.getUniqueId());
-        if (entry == null) {
+        final PickedItems pickedItem = pickedItems.get(player.getUniqueId());
+        if (pickedItem == null) {
             return;
         }
-        final InventoryLoc pickedUpLoc = entry.getKey();
-        final Map.Entry<ItemStack, Map.Entry<Integer, InventoryView>> itemEntry = entry.getValue();
-        final ItemStack item = itemEntry.getKey();
-        final int rawSlot = itemEntry.getValue().getKey();
-        final InventoryView view = itemEntry.getValue().getValue();
+        final ItemStack droppedItem = event.getItemDrop().getItemStack().clone();
+        final int newAmount = pickedItem.getItem().getAmount() - droppedItem.getAmount();
+        if (newAmount <= 0) {
+            pickedItems.remove(player.getUniqueId());
+        } else {
+            droppedItem.setAmount(newAmount);
+            pickedItem.setItem(droppedItem);
+        }
+        final InventoryLoc pickedUpLoc = pickedItem.getLoc();
+        final ItemStack item = pickedItem.getItem();
+        final int rawSlot = pickedItem.getSlot();
+        final InventoryView view = pickedItem.getView();
         final Inventory top = view.getTopInventory();
         final Inventory bottom = view.getBottomInventory();
+        final boolean crafting = top.getType() == InventoryType.CRAFTING;
 
-        final boolean cancelled = activateEvent((pickedUpLoc == InventoryLoc.BOTTOM) ? TransferType.DROP_SELF : TransferType.DROP_OTHER, item,
-                (pickedUpLoc == InventoryLoc.BOTTOM) ? bottom : top, view);
+        final TransferType type = (pickedUpLoc == InventoryLoc.BOTTOM)
+                ? TransferType.DROP_SELF : (crafting ? TransferType.DROP_CRAFTING : TransferType.DROP_OTHER);
+
+        final boolean cancelled = activateEvent(type, item, (pickedUpLoc == InventoryLoc.BOTTOM) ? bottom : top, view);
         if (!cancelled) {
             return;
         }
@@ -55,8 +87,8 @@ public class ItemMoveListeners implements Listener {
         final Player player = (Player) event.getWhoClicked();
         final Inventory top = event.getView().getTopInventory();
         final Inventory bottom = event.getView().getBottomInventory();
-        final Map.Entry<InventoryLoc, Map.Entry<ItemStack, Map.Entry<Integer, InventoryView>>> entry = pickedItems.getOrDefault(player.getUniqueId(), null);
-        final InventoryLoc pickedUpLoc = entry == null ? null : entry.getKey();
+        final PickedItems pickedItem = pickedItems.getOrDefault(player.getUniqueId(), null);
+        final InventoryLoc pickedUpLoc = pickedItem == null ? null : pickedItem.getLoc();
 
         final List<ItemStack> topItems = new ArrayList<>();
         final List<ItemStack> bottomItems = new ArrayList<>();
@@ -68,10 +100,10 @@ public class ItemMoveListeners implements Listener {
             bottomItems.add(e.getValue());
         }
         if (pickedUpLoc == InventoryLoc.TOP && (!bottomItems.isEmpty())) {
-            activateEvent(TransferType.PUT_OTHER, bottomItems, top, bottom, event);
+            activateEvent(TransferType.PUT_OTHER_SELF, bottomItems, top, bottom, event);
         }
         if (pickedUpLoc == InventoryLoc.BOTTOM && (!topItems.isEmpty())) {
-            activateEvent(TransferType.PUT_SELF, bottomItems, bottom, top, event);
+            activateEvent(TransferType.PUT_SELF_OTHER, bottomItems, bottom, top, event);
         }
         if (!event.isCancelled()) {
             pickedItems.remove(player.getUniqueId());
@@ -81,8 +113,8 @@ public class ItemMoveListeners implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     private void onClick(InventoryClickEvent event) {
         final Player player = (Player) event.getWhoClicked();
-        final Map.Entry<InventoryLoc, Map.Entry<ItemStack, Map.Entry<Integer, InventoryView>>> entry = pickedItems.getOrDefault(player.getUniqueId(), null);
-        final InventoryLoc pickedUpLoc = entry == null ? null : entry.getKey();
+        final PickedItems pickedItem = pickedItems.getOrDefault(player.getUniqueId(), null);
+        final InventoryLoc pickedUpLoc = pickedItem == null ? null : pickedItem.getLoc();
         final Inventory top = event.getView().getTopInventory();
         final Inventory bottom = event.getView().getBottomInventory();
         final Inventory clickedInventory = event.getClickedInventory();
@@ -90,9 +122,13 @@ public class ItemMoveListeners implements Listener {
         final SimplifiedAction simplifiedAction = SimplifiedAction.fromAction(action);
         final ItemStack currentItem = event.getCurrentItem();
         final ItemStack cursorItem = event.getCursor();
+        final boolean crafting = top.getType() == InventoryType.CRAFTING;
         final boolean inventoryIsPlayer = clickedInventory != null && (clickedInventory instanceof PlayerInventory ||
                 clickedInventory.getType() == InventoryType.CRAFTING);
-        final InventoryLoc clickedInvLoc = inventoryIsPlayer ? InventoryLoc.BOTTOM : InventoryLoc.TOP;
+        final boolean clickedIsCrafting = crafting && top == clickedInventory;
+        final InventoryLoc clickedInvLoc = inventoryIsPlayer
+                ? (clickedIsCrafting ? InventoryLoc.TOP : InventoryLoc.BOTTOM)
+                : InventoryLoc.TOP;
         boolean put = false;
         boolean remove = false;
 
@@ -107,126 +143,154 @@ public class ItemMoveListeners implements Listener {
             }
             return;
         }
-        if (simplifiedAction == SimplifiedAction.PICKUP && clickedInventory.getType() != InventoryType.CRAFTING) {
+        if (simplifiedAction == SimplifiedAction.PICKUP) {
             put = true;
         }
-        if (simplifiedAction == SimplifiedAction.DROP_CURSOR) {
-            activateEvent(inventoryIsPlayer ? TransferType.DROP_SELF : TransferType.DROP_OTHER, cursorItem,
-                    inventoryIsPlayer ? bottom : top,
-                    null, event, action);
-        }
-        if (simplifiedAction == SimplifiedAction.DROP_SLOT) {
-            activateEvent(inventoryIsPlayer ? TransferType.DROP_SELF : TransferType.DROP_OTHER, currentItem,
-                    inventoryIsPlayer ? bottom : top,
-                    null, event, action);
-        }
-        if (simplifiedAction == SimplifiedAction.PLACE) {
-            remove = true;
-            if (pickedUpLoc != null) {
-                if (pickedUpLoc == InventoryLoc.TOP) {
-                    if (inventoryIsPlayer) {
-                        activateEvent(TransferType.PUT_OTHER, cursorItem, top, bottom, event, action);
-                    }
-                } else {
-                    if (!inventoryIsPlayer) {
-                        activateEvent(TransferType.PUT_SELF, cursorItem, bottom, top, event, action);
-                    }
-                }
-            }
-        }
-        if (simplifiedAction == SimplifiedAction.SWAP_WITH_CURSOR) {
-            if (pickedUpLoc != null) {
-                if (!inventoryIsPlayer && pickedUpLoc == InventoryLoc.TOP) {
-                    activateEvent(TransferType.PUT_OTHER, cursorItem, top, bottom, event, action);
-                } else if (inventoryIsPlayer && pickedUpLoc == InventoryLoc.BOTTOM) {
-                    activateEvent(TransferType.PUT_SELF, cursorItem, bottom, top, event, action);
-                }
-            }
-            put = true;
-        }
-        if (simplifiedAction == SimplifiedAction.HOTBAR_SWAP) {
-            if (!inventoryIsPlayer) {
-                if (player.getInventory().getItem(event.getHotbarButton()) == null) {
-                    activateEvent(TransferType.PUT_OTHER, currentItem, top, bottom, event, action);
-                } else {
-                    activateEvent(TransferType.PUT_SELF, player.getInventory().getItem(event.getHotbarButton()),
-                            bottom, top, event, action);
-                }
-            }
-        }
-        if (simplifiedAction == SimplifiedAction.COLLECT_TO_CURSOR) {
-            final ItemStack selectedItem = event.getCursor();
-            int amount = selectedItem.getAmount();
-            List<ItemStack> topItems = new ArrayList<>();
-            List<ItemStack> bottomItems = new ArrayList<>();
-            for (int i = 0; i < (top.getSize() + bottom.getSize()); i++) {
-                if (amount >= selectedItem.getMaxStackSize()) {
+        if (simplifiedAction != null) {
+            switch (simplifiedAction) {
+                case DROP_CURSOR: {
+                    activateEvent(inventoryIsPlayer ? TransferType.DROP_SELF : TransferType.DROP_OTHER, cursorItem,
+                            inventoryIsPlayer ? bottom : top,
+                            null, event, action);
                     break;
                 }
-                final ItemStack item = event.getView().getItem(i);
-                if (item == null) {
-                    continue;
+                case DROP_SLOT: {
+                    activateEvent(inventoryIsPlayer ? TransferType.DROP_SELF : TransferType.DROP_OTHER, currentItem,
+                            inventoryIsPlayer ? bottom : top,
+                            null, event, action);
+                    break;
                 }
-                if (!selectedItem.isSimilar(item)) {
-                    continue;
-                }
-                amount = amount + item.getAmount();
-                if (i < top.getSize()) {
-                    if (pickedUpLoc == InventoryLoc.TOP) {
-                        continue;
+                case PLACE: {
+                    remove = true;
+                    if (pickedUpLoc == null) {
+                        break;
                     }
-                    topItems.add(item);
-                    continue;
+                    if (pickedUpLoc == InventoryLoc.TOP) {
+                        if (inventoryIsPlayer) {
+                            activateEvent(TransferType.PUT_OTHER_SELF, cursorItem, top, bottom, event, action);
+                        }
+                        break;
+                    }
+                    if (!inventoryIsPlayer || crafting) {
+                        activateEvent(TransferType.PUT_SELF_OTHER, cursorItem, bottom, top, event, action);
+                    }
+                    break;
                 }
-                if (pickedUpLoc == InventoryLoc.BOTTOM) {
-                    continue;
+                case SWAP_WITH_CURSOR: {
+                    put = true;
+                    if (pickedUpLoc == null) {
+                        break;
+                    }
+                    if (!inventoryIsPlayer && pickedUpLoc == InventoryLoc.TOP) {
+                        activateEvent(TransferType.PUT_OTHER_SELF, cursorItem, top, bottom, event, action);
+                    } else if (inventoryIsPlayer && pickedUpLoc == InventoryLoc.BOTTOM) {
+                        activateEvent(TransferType.PUT_SELF_OTHER, cursorItem, bottom, top, event, action);
+                    }
+                    break;
                 }
-                bottomItems.add(item);
+                case HOTBAR_SWAP: {
+                    if (inventoryIsPlayer) {
+                        if (!crafting || getLocOfView(event.getView(), event.getRawSlot()) == InventoryLoc.BOTTOM) {
+                            break;
+                        }
+                        if (player.getInventory().getItem(event.getHotbarButton()) == null) {
+                            activateEvent(TransferType.PUT_CRAFTING_SELF, currentItem, top, bottom, event, action);
+                            break;
+                        }
+                        activateEvent(TransferType.PUT_SELF_CRAFTING, player.getInventory().getItem(event.getHotbarButton()),
+                                bottom, top, event, action);
+                        break;
+                    }
+                    if (player.getInventory().getItem(event.getHotbarButton()) == null) {
+                        activateEvent(TransferType.PUT_OTHER_SELF, currentItem, top, bottom, event, action);
+                        break;
+                    }
+                    activateEvent(TransferType.PUT_SELF_OTHER, player.getInventory().getItem(event.getHotbarButton()),
+                            bottom, top, event, action);
+                    break;
+                }
+                case COLLECT_TO_CURSOR: {
+                    final ItemStack selectedItem = event.getCursor();
+                    int amount = selectedItem.getAmount();
+                    List<ItemStack> topItems = new ArrayList<>();
+                    List<ItemStack> bottomItems = new ArrayList<>();
+                    for (int i = 0; i < (top.getSize() + bottom.getSize()); i++) {
+                        if (amount >= selectedItem.getMaxStackSize()) {
+                            break;
+                        }
+                        final ItemStack item = event.getView().getItem(i);
+                        if (item == null) {
+                            continue;
+                        }
+                        if (!selectedItem.isSimilar(item)) {
+                            continue;
+                        }
+                        amount = amount + item.getAmount();
+                        if (i < top.getSize()) {
+                            if (pickedUpLoc == InventoryLoc.TOP) {
+                                continue;
+                            }
+                            topItems.add(item);
+                            continue;
+                        }
+                        if (pickedUpLoc == InventoryLoc.BOTTOM) {
+                            continue;
+                        }
+                        bottomItems.add(item);
+                    }
+                    if (!topItems.isEmpty()) {
+                        activateEvent(TransferType.PUT_OTHER_SELF, bottomItems, top, bottom, event, action);
+                    }
+                    if (!bottomItems.isEmpty()) {
+                        activateEvent(TransferType.PUT_SELF_OTHER, topItems, bottom, top, event, action);
+                    }
+                }
+                case MOVE_TO_OTHER_INVENTORY: {
+                    if (!inventoryIsPlayer) {
+                        activateEvent(TransferType.PUT_OTHER_SELF, currentItem, top, bottom, event, action);
+                    } else if (!crafting) {
+                        activateEvent(TransferType.PUT_SELF_OTHER, currentItem, bottom, top, event, action);
+                    } else if (clickedIsCrafting) {
+                        activateEvent(TransferType.PUT_CRAFTING_SELF, currentItem, top, bottom, event, action);
+                    }
+                }
             }
-            if (!topItems.isEmpty()) {
-                activateEvent(TransferType.PUT_OTHER, bottomItems, top, bottom, event, action);
-            }
-            if (!bottomItems.isEmpty()) {
-                activateEvent(TransferType.PUT_SELF, topItems, bottom, top, event, action);
-            }
-        }
-        if (simplifiedAction == SimplifiedAction.MOVE_TO_OTHER_INVENTORY && !inventoryIsPlayer) {
-            activateEvent(TransferType.PUT_OTHER, currentItem, top, bottom, event, action);
         }
         if (event.isCancelled()) {
             return;
         }
         if (put) {
-            pickedItems.put(player.getUniqueId(),
-                    new EntryImpl<>(clickedInvLoc,
-                    new EntryImpl<>(currentItem.clone(),
-                    new EntryImpl<>(event.getRawSlot(), event.getView()))));
+            pickedItems.put(player.getUniqueId(), new PickedItems(clickedInvLoc, currentItem.clone(), event.getRawSlot(), event.getView()));
         }
         if (remove) {
             pickedItems.remove(player.getUniqueId());
         }
     }
 
-    private boolean activateEvent(@SuppressWarnings("SameParameterValue") TransferType type, ItemStack item,
-                                  Inventory from, InventoryView view) {
+    private boolean activateEvent(@SuppressWarnings("SameParameterValue") final TransferType type, final ItemStack item,
+                                  final Inventory from, final InventoryView view) {
         return activateEvent(type, Collections.singletonList(item), from, null, view, null, null);
     }
 
-    private void activateEvent(TransferType type, List<ItemStack> items, Inventory from, Inventory to, InventoryDragEvent event) {
+    private void activateEvent(final TransferType type, final List<ItemStack> items, final Inventory from, final Inventory to,
+                               final InventoryDragEvent event) {
         activateEvent(type, items, from, to, event.getView(), event, null);
     }
 
-    private void activateEvent(TransferType type, ItemStack item, Inventory from, Inventory to, InventoryClickEvent event, InventoryAction specificType) {
+    private void activateEvent(final TransferType type, final ItemStack item, final Inventory from, final Inventory to,
+                               final InventoryClickEvent event, final InventoryAction specificType) {
         activateEvent(type, Collections.singletonList(item), from, to, event, specificType);
     }
 
-    private void activateEvent(TransferType type, List<ItemStack> items, Inventory from, Inventory to, InventoryClickEvent event, InventoryAction specificType) {
+    private void activateEvent(final TransferType type, final List<ItemStack> items, final Inventory from, final Inventory to,
+                               final InventoryClickEvent event, final InventoryAction specificType) {
         activateEvent(type, items, from, to, event.getView(), event, specificType);
     }
 
-    private boolean activateEvent(TransferType type, List<ItemStack> items, Inventory from, Inventory to,
-                                  InventoryView view, Cancellable event, InventoryAction specificType) {
-        final InventoryItemTransferEvent e = new InventoryItemTransferEvent(type, view,
+    private boolean activateEvent(final TransferType type, final List<ItemStack> items, final Inventory from, final Inventory to,
+                                  final InventoryView view, final Cancellable event, final InventoryAction specificType) {
+        final boolean crafting = view.getTopInventory().getType() == InventoryType.CRAFTING;
+        final InventoryItemTransferEvent e = new InventoryItemTransferEvent(type.applyCrafting(crafting), view,
                 Collections.unmodifiableList(items), from, to, event != null && event.isCancelled(), specificType);
         Bukkit.getPluginManager().callEvent(e);
         if (event != null) {
@@ -235,9 +299,10 @@ public class ItemMoveListeners implements Listener {
         return e.isCancelled();
     }
 
-    @SuppressWarnings("unused")
-    private enum InventoryLoc {
-        TOP,
-        BOTTOM
+    private InventoryLoc getLocOfView(InventoryView view, int rawSlot) {
+        if (rawSlot < view.getTopInventory().getSize()) {
+            return InventoryLoc.TOP;
+        }
+        return InventoryLoc.BOTTOM;
     }
 }

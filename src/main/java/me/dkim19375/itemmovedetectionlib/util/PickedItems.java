@@ -22,31 +22,53 @@
  * SOFTWARE.
  */
 
-package me.dkim19375.itemmovedetectionlib;
+package me.dkim19375.itemmovedetectionlib.util;
 
-import me.dkim19375.itemmovedetectionlib.listener.ItemMoveListeners;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.inventory.InventoryView;
+import org.bukkit.inventory.ItemStack;
 
-public class ItemMoveDetectionLib {
-    private static boolean registered = false;
+public class PickedItems {
+    private InventoryLoc loc;
+    private ItemStack item;
+    private Integer slot;
+    private InventoryView view;
 
-    public static void register() {
-        register(JavaPlugin.getProvidingPlugin(ItemMoveDetectionLib.class));
+    public PickedItems(InventoryLoc loc, ItemStack item, Integer slot, InventoryView view) {
+        this.loc = loc;
+        this.item = item;
+        this.slot = slot;
+        this.view = view;
     }
 
-    public static void register(JavaPlugin plugin) {
-        if (!isRegistered()) {
-            registered = true;
-            registerListeners(plugin);
-        }
+    public InventoryLoc getLoc() {
+        return loc;
     }
 
-    public static boolean isRegistered() {
-        return registered;
+    public ItemStack getItem() {
+        return item;
     }
 
-    private static void registerListeners(JavaPlugin plugin) {
-        Bukkit.getPluginManager().registerEvents(new ItemMoveListeners(), plugin);
+    public Integer getSlot() {
+        return slot;
+    }
+
+    public InventoryView getView() {
+        return view;
+    }
+
+    public void setLoc(InventoryLoc loc) {
+        this.loc = loc;
+    }
+
+    public void setItem(ItemStack item) {
+        this.item = item;
+    }
+
+    public void setSlot(Integer slot) {
+        this.slot = slot;
+    }
+
+    public void setView(InventoryView view) {
+        this.view = view;
     }
 }
