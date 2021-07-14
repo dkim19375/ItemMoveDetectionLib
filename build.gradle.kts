@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "me.dkim19375"
-version = "1.1.0"
+version = "1.1.1"
 
 val javaVersion = JavaVersion.VERSION_1_8
 

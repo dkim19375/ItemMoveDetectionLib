@@ -4,9 +4,7 @@ A simple library to detect when a player removes or adds an item from their inve
 
 Note: For GUI plugins and similar, you should use `InventoryClickEvent` instead of this library.
 ## How to use
-### Getting the dependency 
-There are two types: Plugin and shading.
-This can be a standalone plugin, or you can choose to include it inside your own plugin jar.
+### Getting the dependency
 
 Gradle:
 ```groovy
@@ -16,17 +14,15 @@ plugins {
 
 shadowJar {
     // Replace [YOUR PACKAGE] with your base package (ex: me.dkim19375.bedwars)
-    // Do not use if you're not shading, as it will break!!
     relocate 'me.dkim19375.itemmovedetectionlib', '[YOUR PACKAGE].itemmovedetectionlib'
 }
 
 dependencies {
     // Make sure to replace VERSION with the latest version
-    // Replace "implementation" with "compileOnly" if you're not shading
     implementation 'io.github.dkim19375:item-move-detection-lib:VERSION'
 }
 ```
-Or with maven, add the shade plugin: (Do not do this if you're not shading!)
+Or with maven, add the shade plugin: 
 ```xml
 <plugin>
     <groupId>org.apache.maven.plugins</groupId>
@@ -50,25 +46,13 @@ Or with maven, add the shade plugin: (Do not do this if you're not shading!)
     </executions>
 </plugin>
 ```
-Add the dependency: (only use scope provided if you're not shading)
+Add the dependency:
 ```xml
 <dependency>
     <groupId>io.github.dkim19375</groupId>
     <artifactId>item-move-detection-lib</artifactId>
     <version>VERSION</version> <!-- replace version here -->
-    
-    <scope>provided</scope> <!-- Only include this if you're not shading -->
 </dependency>
-```
-
-If you're shading, you can skip to the "Using the library" section, if not, 
-add this to your `plugin.yml`: 
-```yaml
-depend: [ ItemMoveDetectionLib ]
-```
-Or if you want it to be a soft-depend (not required), use this: 
-```yaml
-softdepend: [ ItemMoveDetectionLib ]
 ```
 
 ### Using the library

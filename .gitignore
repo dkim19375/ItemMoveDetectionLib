@@ -3,3 +3,5 @@
 /build/
 /build/classes/java/main/
 /.idea/
+/src/main/resources/plugin.yml
+/src/main/java/me/dkim19375/itemmovedetectionlib/ItemMoveDetectionPlugin.java
