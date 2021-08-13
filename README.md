@@ -17,6 +17,10 @@ shadowJar {
     relocate 'me.dkim19375.itemmovedetectionlib', '[YOUR PACKAGE].itemmovedetectionlib'
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     // Make sure to replace VERSION with the latest version
     implementation 'io.github.dkim19375:item-move-detection-lib:VERSION'
