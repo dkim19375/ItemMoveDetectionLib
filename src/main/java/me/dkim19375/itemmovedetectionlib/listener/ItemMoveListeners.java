@@ -122,7 +122,7 @@ public class ItemMoveListeners implements Listener {
         final SimplifiedAction simplifiedAction = SimplifiedAction.fromAction(action);
         final ItemStack currentItem = event.getCurrentItem();
         final ItemStack cursorItem = event.getCursor();
-        final boolean crafting = clickedInventory != null && clickedInventory.getType() == InventoryType.CRAFTING;
+        final boolean crafting = top.getType() == InventoryType.CRAFTING;
         final boolean inventoryIsPlayer = clickedInventory != null && (clickedInventory instanceof PlayerInventory ||
                 clickedInventory.getType() == InventoryType.CRAFTING);
         final boolean clickedIsCrafting = crafting && top == clickedInventory;
@@ -171,8 +171,7 @@ public class ItemMoveListeners implements Listener {
                         }
                         break;
                     }
-                    if (!inventoryIsPlayer || crafting) {
-                        Bukkit.broadcastMessage("inventoryIsPlayer: " + inventoryIsPlayer + ", crafting: " + crafting);
+                    if (!inventoryIsPlayer || clickedIsCrafting) {
                         activateEvent(TransferType.PUT_SELF_OTHER, cursorItem, bottom, top, event, action);
                     }
                     break;
