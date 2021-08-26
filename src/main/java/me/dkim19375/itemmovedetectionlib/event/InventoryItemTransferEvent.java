@@ -138,4 +138,17 @@ public class InventoryItemTransferEvent extends InventoryEvent implements Cancel
     public InventoryAction getInventoryAction() {
         return inventoryAction;
     }
+
+    @Override
+    public String toString() {
+        return "InventoryItemTransferEvent{" +
+                "player=" + player.getName() +
+                ", type=" + type.name() +
+                ", items=" + items +
+                ", from=" + from.getType().name() +
+                ", to=" + (to != null ? to.getType().name() : null) +
+                ", cancelled=" + cancelled +
+                ", inventoryAction=" + (inventoryAction != null ? inventoryAction.name() : null) +
+                '}';
+    }
 }

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "me.dkim19375"
-version = "1.1.1"
+version = "1.1.2"
 
 val javaVersion = JavaVersion.VERSION_1_8
 
@@ -41,7 +41,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.jetbrains:annotations:+")
+    compileOnly("org.jetbrains:annotations:22.0.0")
     compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
 }
 
