@@ -181,11 +181,14 @@ public class ItemMoveListeners implements Listener {
                     if (pickedUpLoc == null) {
                         break;
                     }
-                    if (!inventoryIsPlayer && pickedUpLoc == InventoryLoc.TOP) {
-                        activateEvent(TransferType.PUT_OTHER_SELF, cursorItem, top, bottom, event, action);
-                    } else if (inventoryIsPlayer && pickedUpLoc == InventoryLoc.BOTTOM) {
-                        activateEvent(TransferType.PUT_SELF_OTHER, cursorItem, bottom, top, event, action);
+                    if (clickedInvLoc == pickedUpLoc) {
+                        break;
                     }
+                    activateEvent(pickedUpLoc == InventoryLoc.TOP
+                            ? TransferType.PUT_OTHER_SELF
+                            : TransferType.PUT_SELF_OTHER, cursorItem,
+                            pickedUpLoc == InventoryLoc.TOP ? top : bottom,
+                            pickedUpLoc == InventoryLoc.TOP ? bottom : top, event, action);
                     break;
                 }
                 case HOTBAR_SWAP: {
