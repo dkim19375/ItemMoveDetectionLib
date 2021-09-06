@@ -56,7 +56,7 @@ public class InventoryItemTransferEvent extends InventoryEvent implements Cancel
     @Nullable
     private final InventoryAction inventoryAction;
 
-    public InventoryItemTransferEvent(@NotNull TransferType type, InventoryView transaction, @NotNull List<ItemStack> items,
+    public InventoryItemTransferEvent(@NotNull TransferType type, @NotNull InventoryView transaction, @NotNull List<ItemStack> items,
                                       @NotNull Inventory from, @Nullable Inventory to, boolean cancelled, @Nullable InventoryAction inventoryAction) {
         super(transaction);
         this.type = type;

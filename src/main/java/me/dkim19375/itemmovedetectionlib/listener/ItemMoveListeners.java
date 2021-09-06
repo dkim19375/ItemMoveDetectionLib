@@ -25,9 +25,11 @@
 package me.dkim19375.itemmovedetectionlib.listener;
 
 import me.dkim19375.itemmovedetectionlib.event.InventoryItemTransferEvent;
-import me.dkim19375.itemmovedetectionlib.util.*;
+import me.dkim19375.itemmovedetectionlib.util.InventoryLoc;
+import me.dkim19375.itemmovedetectionlib.util.PickedItems;
+import me.dkim19375.itemmovedetectionlib.util.SimplifiedAction;
+import me.dkim19375.itemmovedetectionlib.util.TransferType;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
@@ -53,6 +55,8 @@ public class ItemMoveListeners implements Listener {
         final Player player = event.getPlayer();
         final PickedItems pickedItem = pickedItems.get(player.getUniqueId());
         if (pickedItem == null) {
+            activateEvent(event.getItemDrop().getItemStack(), event.getPlayer().getInventory(),
+                    event.getPlayer().getOpenInventory(), event);
             return;
         }
         final ItemStack droppedItem = event.getItemDrop().getItemStack().clone();
@@ -74,7 +78,7 @@ public class ItemMoveListeners implements Listener {
         final TransferType type = (pickedUpLoc == InventoryLoc.BOTTOM)
                 ? TransferType.DROP_SELF : (crafting ? TransferType.DROP_CRAFTING : TransferType.DROP_OTHER);
 
-        final boolean cancelled = activateEvent(type, item, (pickedUpLoc == InventoryLoc.BOTTOM) ? bottom : top, view);
+        final boolean cancelled = activateEvent(type, event.getItemDrop().getItemStack(), (pickedUpLoc == InventoryLoc.BOTTOM) ? bottom : top, view);
         if (!cancelled) {
             return;
         }
@@ -136,11 +140,6 @@ public class ItemMoveListeners implements Listener {
             return;
         }
         if (clickedInventory == null) {
-            if (simplifiedAction == SimplifiedAction.DROP_CURSOR) {
-                activateEvent((pickedUpLoc == InventoryLoc.BOTTOM) ? TransferType.DROP_SELF : TransferType.DROP_OTHER, cursorItem,
-                        (pickedUpLoc == InventoryLoc.BOTTOM) ? bottom : top,
-                        null, event, action);
-            }
             return;
         }
         if (simplifiedAction == SimplifiedAction.PICKUP) {
@@ -148,18 +147,6 @@ public class ItemMoveListeners implements Listener {
         }
         if (simplifiedAction != null) {
             switch (simplifiedAction) {
-                case DROP_CURSOR: {
-                    activateEvent(inventoryIsPlayer ? TransferType.DROP_SELF : TransferType.DROP_OTHER, cursorItem,
-                            inventoryIsPlayer ? bottom : top,
-                            null, event, action);
-                    break;
-                }
-                case DROP_SLOT: {
-                    activateEvent(inventoryIsPlayer ? TransferType.DROP_SELF : TransferType.DROP_OTHER, currentItem,
-                            inventoryIsPlayer ? bottom : top,
-                            null, event, action);
-                    break;
-                }
                 case PLACE: {
                     remove = true;
                     if (pickedUpLoc == null) {
@@ -185,8 +172,8 @@ public class ItemMoveListeners implements Listener {
                         break;
                     }
                     activateEvent(pickedUpLoc == InventoryLoc.TOP
-                            ? TransferType.PUT_OTHER_SELF
-                            : TransferType.PUT_SELF_OTHER, cursorItem,
+                                    ? TransferType.PUT_OTHER_SELF
+                                    : TransferType.PUT_SELF_OTHER, cursorItem,
                             pickedUpLoc == InventoryLoc.TOP ? top : bottom,
                             pickedUpLoc == InventoryLoc.TOP ? bottom : top, event, action);
                     break;
@@ -270,7 +257,7 @@ public class ItemMoveListeners implements Listener {
         }
     }
 
-    private boolean activateEvent(@SuppressWarnings("SameParameterValue") final TransferType type, final ItemStack item,
+    private boolean activateEvent(final TransferType type, final ItemStack item,
                                   final Inventory from, final InventoryView view) {
         return activateEvent(type, Collections.singletonList(item), from, null, view, null, null);
     }
@@ -288,6 +275,11 @@ public class ItemMoveListeners implements Listener {
     private void activateEvent(final TransferType type, final List<ItemStack> items, final Inventory from, final Inventory to,
                                final InventoryClickEvent event, final InventoryAction specificType) {
         activateEvent(type, items, from, to, event.getView(), event, specificType);
+    }
+
+    private void activateEvent(final ItemStack item, final Inventory from, final InventoryView view,
+                               final Cancellable event) {
+        activateEvent(TransferType.DROP_SELF, Collections.singletonList(item), from, null, view, event, null);
     }
 
     private boolean activateEvent(final TransferType type, final List<ItemStack> items, final Inventory from, final Inventory to,
