@@ -45,7 +45,12 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class ItemMoveListeners implements Listener {
     private final Map<UUID, PickedItems> pickedItems = new HashMap<>();
@@ -86,7 +91,7 @@ public class ItemMoveListeners implements Listener {
         event.getItemDrop().remove();
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     private void onDrag(InventoryDragEvent event) {
         final Player player = (Player) event.getWhoClicked();
         final Inventory top = event.getView().getTopInventory();
@@ -114,7 +119,7 @@ public class ItemMoveListeners implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     private void onClick(InventoryClickEvent event) {
         final Player player = (Player) event.getWhoClicked();
         final PickedItems pickedItem = pickedItems.getOrDefault(player.getUniqueId(), null);
