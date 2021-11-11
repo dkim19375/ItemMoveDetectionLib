@@ -1,4 +1,5 @@
-![GitHub release (latest by date)](https://img.shields.io/maven-central/v/io.github.dkim19375/item-move-detection-lib?label=Latest%20Version)
+![Latest Maven Central Version](https://img.shields.io/maven-central/v/io.github.dkim19375/item-move-detection-lib?label=Latest%20Version)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dkim19375/ItemMoveDetectionLib/Testing%20CI%20with%20Gradle)
 # ItemMoveDetectionLib
 A simple library to detect when a player removes or adds an item from their inventory.
 
