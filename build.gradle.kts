@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "me.dkim19375"
-version = "1.1.6"
+version = "1.1.7"
 
 val javaVersion = JavaVersion.VERSION_1_8
 
@@ -42,7 +42,9 @@ repositories {
 
 dependencies {
     compileOnly("org.jetbrains:annotations:23.0.0")
-    compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT") {
+        exclude(module = "bungeecord-api")
+    }
 }
 
 tasks.processResources {
