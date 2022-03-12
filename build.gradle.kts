@@ -1,14 +1,14 @@
 plugins {
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("net.minecrell.licenser") version "0.4.1"
-    `maven-publish`
-    signing
     java
+    signing
+    `maven-publish`
+    id("org.cadixdev.licenser") version "0.6.1"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
 group = "me.dkim19375"
-version = "1.1.7"
+version = "1.1.8"
 
 val javaVersion = JavaVersion.VERSION_1_8
 
@@ -20,14 +20,14 @@ java {
 }
 
 license {
-    header = rootProject.file("LICENSE")
+    header.set(resources.text.fromFile(rootProject.file("LICENSE")))
     include("**/*.java")
 }
 
 tasks.shadowJar {
     finalizedBy("deleteFiles")
     finalizedBy("copyFileToServer_8")
-    finalizedBy("copyFileToServer_16")
+    finalizedBy("copyFileToServer_18")
 }
 
 tasks.wrapper {
@@ -61,16 +61,16 @@ tasks.register<Copy>("copyFileToServer_8") {
     include("*.jar")
 }
 
-tasks.register<Copy>("copyFileToServer_16") {
-    File("../.TestServers/1.16/plugins/" + project.name + "-" + project.version + "-all.jar").delete()
+tasks.register<Copy>("copyFileToServer_18") {
+    File("../.TestServers/1.18/plugins/" + project.name + "-" + project.version + "-all.jar").delete()
     from("build/libs/" + project.name + "-" + project.version + "-all.jar")
-    into("../.TestServers/1.16/plugins")
+    into("../.TestServers/1.18/plugins")
     include("*.jar")
 }
 
 tasks.register<Copy>("deleteFiles") {
     File("../.TestServers/1.8/plugins/" + project.name + "-" + project.version + "-all.jar").delete()
-    File("../.TestServers/1.16/plugins/" + project.name + "-" + project.version + "-all.jar").delete()
+    File("../.TestServers/1.18/plugins/" + project.name + "-" + project.version + "-all.jar").delete()
 }
 
 publishing {

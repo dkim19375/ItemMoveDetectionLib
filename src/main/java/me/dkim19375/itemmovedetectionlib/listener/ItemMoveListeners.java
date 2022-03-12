@@ -114,9 +114,7 @@ public class ItemMoveListeners implements Listener {
         if (pickedUpLoc == InventoryLoc.BOTTOM && (!topItems.isEmpty())) {
             activateEvent(TransferType.PUT_SELF_OTHER, bottomItems, bottom, top, event);
         }
-        if (!event.isCancelled()) {
-            pickedItems.remove(player.getUniqueId());
-        }
+        pickedItems.remove(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -209,7 +207,8 @@ public class ItemMoveListeners implements Listener {
                     int amount = selectedItem.getAmount();
                     List<ItemStack> topItems = new ArrayList<>();
                     List<ItemStack> bottomItems = new ArrayList<>();
-                    for (int i = 0; i < (top.getSize() + bottom.getSize()); i++) {
+                    final int totalSize = top.getSize() + (bottom.getType() == InventoryType.PLAYER ? 36 : bottom.getSize());
+                    for (int i = 0; i < totalSize; i++) {
                         if (amount >= selectedItem.getMaxStackSize()) {
                             break;
                         }
@@ -250,9 +249,6 @@ public class ItemMoveListeners implements Listener {
                     }
                 }
             }
-        }
-        if (event.isCancelled()) {
-            return;
         }
         if (put) {
             pickedItems.put(player.getUniqueId(), new PickedItems(clickedInvLoc, currentItem.clone(), event.getRawSlot(), event.getView()));
